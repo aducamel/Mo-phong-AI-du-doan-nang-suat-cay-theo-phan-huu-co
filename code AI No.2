@@ -1,0 +1,33 @@
+# Mô phỏng AI dự đoán năng suất cây trên 1 chậu rộng 1m²
+# Theo lượng phân hữu cơ bón (kg/chậu)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Dữ liệu giả định: (kg phân/chậu) -> (năng suất kg/chậu)
+# Thay đổi các giá trị dưới đây để sử dụng dữ liệu của bạn
+phan_huu_co = np.array([0, 1, 2, 3, 4, 5, 6]).reshape(-1, 1)
+nang_suat = np.array([0.5, 1.2, 2.0, 2.8, 3.5, 3.8, 4.0])  # ví dụ
+
+# Tạo mô hình hồi quy tuyến tính
+model = LinearRegression()
+model.fit(phan_huu_co, nang_suat)
+
+# Thử dự đoán với phân từ 0 → 7 kg/chậu
+X_new = np.linspace(0, 7, 100).reshape(-1, 1)
+y_pred = model.predict(X_new)
+
+# In ra phương trình hồi quy
+print("Hệ số góc (a):", model.coef_[0])
+print("Hệ số chặn (b):", model.intercept_)
+print(f"Phương trình dự đoán: Năng suất ≈ {model.coef_[0]:.2f} * Phân + {model.intercept_:.2f}")
+
+# Vẽ biểu đồ
+plt.scatter(phan_huu_co, nang_suat, color='green', label="Dữ liệu thực tế")
+plt.plot(X_new, y_pred, color='red', label="Đường hồi quy dự đoán")
+plt.xlabel("Lượng phân hữu cơ (kg/chậu 1m²)")
+plt.ylabel("Năng suất cây (kg/chậu 1m²)")
+plt.title("Mô phỏng AI dự đoán năng suất cây theo phân hữu cơ")
+plt.legend()
+plt.show()
