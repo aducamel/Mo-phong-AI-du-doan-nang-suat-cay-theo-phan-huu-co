@@ -1,0 +1,52 @@
+# Mô phỏng AI dự đoán năng suất cây trên 1 chậu rộng 1m²
+# Theo lượng phân hữu cơ bón (kg/chậu)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Hàm để lấy dữ liệu từ người dùng
+def get_user_data():
+    phan_huu_co_str = input("Nhập lượng phân hữu cơ (ví dụ: 0, 4, 12, 22, 34, 39, 45), cách nhau bằng dấu phẩy: ")
+    nang_suat_str = input("Nhập năng suất cây tương ứng (ví dụ: 0.5, 3.2, 5.0, 11.8, 22.5, 28.8, 34.0), cách nhau bằng dấu phẩy: ")
+
+    try:
+        phan_huu_co = np.array([float(x.strip()) for x in phan_huu_co_str.split(',')]).reshape(-1, 1)
+        nang_suat = np.array([float(x.strip()) for x in nang_suat_str.split(',')])
+        if len(phan_huu_co) != len(nang_suat):
+            print("Lỗi: Số lượng giá trị phân và năng suất không khớp.")
+            return None, None
+        return phan_huu_co, nang_suat
+    except ValueError:
+        print("Lỗi: Định dạng nhập không hợp lệ. Vui lòng nhập các số cách nhau bằng dấu phẩy.")
+        return None, None
+
+# Lấy dữ liệu từ người dùng
+phan_huu_co, nang_suat = get_user_data()
+
+if phan_huu_co is not None and nang_suat is not None:
+    # Tạo mô hình hồi quy tuyến tính
+    model = LinearRegression()
+    model.fit(phan_huu_co, nang_suat)
+
+    # Thử dự đoán với phân từ 0 → X kg/chậu
+    X_new = np.linspace(0, max(phan_huu_co) if len(phan_huu_co) > 0 else 10, 100).reshape(-1, 1)
+    y_pred = model.predict(X_new)
+
+    # In ra phương trình hồi quy
+    print("\nKết quả mô hình:")
+    print("Hệ số góc (a):", model.coef_[0])
+    print("Hệ số chặn (b):", model.intercept_)
+    print(f"Phương trình dự đoán: Năng suất ≈ {model.coef_[0]:.2f} * Phân + {model.intercept_:.2f}")
+
+    # Vẽ biểu đồ
+    plt.scatter(phan_huu_co, nang_suat, color='green', label="Dữ liệu thực tế")
+    plt.plot(X_new, y_pred, color='red', label="Đường hồi quy dự đoán")
+    plt.xlabel("Lượng phân hữu cơ (kg/1m² chậu)")
+    plt.ylabel("Năng suất cây (kg/1m² chậu)")
+    plt.title("Mô phỏng AI dự đoán năng suất cây theo phân hữu cơ")
+    plt.legend()
+    plt.grid(True) # Add grid lines
+    plt.show()
+else:
+    print("Không thể tiến hành mô phỏng do lỗi nhập dữ liệu.")
