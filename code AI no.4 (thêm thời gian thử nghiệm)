@@ -1,0 +1,64 @@
+# Mô phỏng AI dự đoán năng suất cây trên 1 chậu rộng 1m²
+# Theo lượng phân hữu cơ bón (kg/chậu) và thời gian thử nghiệm (giờ)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Hàm để lấy dữ liệu từ người dùng
+def get_user_data():
+    phan_huu_co_str = input("Nhập lượng phân hữu cơ (ví dụ: 0, 4, 12, 22, 34, 39, 45), cách nhau bằng dấu phẩy: ")
+    thoi_gian_str = input("Nhập thời gian thử nghiệm (ví dụ: 30, 60, 90, 120, 150, 180, 210), cách nhau bằng dấu phẩy: ")
+    nang_suat_str = input("Nhập năng suất cây tương ứng (ví dụ: 0.5, 3.2, 5.0, 11.8, 22.5, 28.8, 34.0), cách nhau bằng dấu phẩy: ")
+
+    try:
+        phan_huu_co = np.array([float(x.strip()) for x in phan_huu_co_str.split(',')])
+        thoi_gian = np.array([float(x.strip()) for x in thoi_gian_str.split(',')])
+        nang_suat = np.array([float(x.strip()) for x in nang_suat_str.split(',')])
+        if not (len(phan_huu_co) == len(thoi_gian) == len(nang_suat)):
+            print("Lỗi: Số lượng giá trị phân, thời gian và năng suất không khớp.")
+            return None, None, None
+        # Kết hợp phân bón và thời gian thành một mảng 2D cho mô hình hồi quy đa biến
+        features = np.column_stack((phan_huu_co, thoi_gian))
+        return features, nang_suat, thoi_gian
+    except ValueError:
+        print("Lỗi: Định dạng nhập không hợp lệ. Vui lòng nhập các số cách nhau bằng dấu phẩy.")
+        return None, None, None
+
+# Lấy dữ liệu từ người dùng
+features, nang_suat, thoi_gian = get_user_data()
+
+if features is not None and nang_suat is not None and thoi_gian is not None:
+    # Tạo mô hình hồi quy tuyến tính đa biến
+    model = LinearRegression()
+    model.fit(features, nang_suat)
+
+    # In ra phương trình hồi quy
+    print("\nKết quả mô hình:")
+    print("Hệ số góc (a1 cho phân hữu cơ):", model.coef_[0])
+    print("Hệ số góc (a2 cho thời gian thử nghiệm):", model.coef_[1])
+    print("Hệ số chặn (b):", model.intercept_)
+    print(f"Phương trình dự đoán: Năng suất ≈ {model.coef_[0]:.2f} * Phân + {model.coef_[1]:.2f} * Thời gian + {model.intercept_:.2f}")
+
+    # Vẽ biểu đồ (vẫn 2D, nhưng có thể dùng marker để phân biệt thời gian)
+    plt.figure(figsize=(10, 6))
+    scatter = plt.scatter(features[:, 0], nang_suat, c=features[:, 1], cmap='viridis', label="Dữ liệu thực tế (màu sắc thể hiện thời gian)")
+    plt.colorbar(scatter, label='Thời gian thử nghiệm (giờ)') # Thêm thanh màu cho thời gian
+
+    # Để vẽ đường hồi quy trong không gian 2D khi có 2 biến độc lập, chúng ta cần cố định 1 biến.
+    # vẽ đường hồi quy cho năng suất theo phân bón tại giá trị thời gian trung bình.
+    phan_huu_co_new = np.linspace(0, max(features[:, 0]) if len(features[:, 0]) > 0 else 10, 100)
+    thoi_gian_mean = np.mean(features[:, 1])
+    features_new = np.column_stack((phan_huu_co_new, np.full_like(phan_huu_co_new, thoi_gian_mean)))
+    y_pred_mean_time = model.predict(features_new)
+
+    plt.plot(phan_huu_co_new, y_pred_mean_time, color='red', linestyle='--', label=f"Đường hồi quy (Thời gian = {thoi_gian_mean:.0f} giờ)")
+
+    plt.xlabel("Lượng phân hữu cơ (kg/1m² chậu)")
+    plt.ylabel("Năng suất cây (kg/1m² chậu)")
+    plt.title("Mô phỏng AI dự đoán năng suất cây theo phân hữu cơ và thời gian")
+    plt.legend()
+    plt.grid(True) # Add grid lines
+    plt.show()
+else:
+    print("Không thể tiến hành mô phỏng do lỗi nhập dữ liệu.")
